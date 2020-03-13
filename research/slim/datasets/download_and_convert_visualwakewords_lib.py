@@ -101,7 +101,7 @@ def create_visual_wakeword_annotations(annotations_file,
   """
   # default object of interest is person
   foreground_class_of_interest_id = 1
-  with tf.gfile.GFile(annotations_file, 'r') as fid:
+  with tf.io.gfile.GFile(annotations_file, 'r') as fid:
     groundtruth_data = json.load(fid)
     images = groundtruth_data['images']
     # Create category index
@@ -111,20 +111,20 @@ def create_visual_wakeword_annotations(annotations_file,
         foreground_class_of_interest_id = category['id']
         category_index[category['id']] = category
     # Create annotations index, a map of image_id to it's annotations
-    tf.logging.info('Building annotations index...')
+    tf.compat.v1.logging.info('Building annotations index...')
     annotations_index = collections.defaultdict(
         lambda: collections.defaultdict(list))
     # structure is { "image_id": {"objects" : [list of the image annotations]}}
     for annotation in groundtruth_data['annotations']:
       annotations_index[annotation['image_id']]['objects'].append(annotation)
     missing_annotation_count = len(images) - len(annotations_index)
-    tf.logging.info('%d images are missing annotations.',
+    tf.compat.v1.logging.info('%d images are missing annotations.',
                     missing_annotation_count)
     # Create filtered annotations index
     annotations_index_filtered = {}
     for idx, image in enumerate(images):
       if idx % 100 == 0:
-        tf.logging.info('On image %d of %d', idx, len(images))
+        tf.compat.v1.logging.info('On image %d of %d', idx, len(images))
       annotations = annotations_index[image['id']]
       annotations_filtered = _filter_annotations(
           annotations, image, small_object_area_threshold,
@@ -195,18 +195,18 @@ def create_tf_record_for_visualwakewords_dataset(annotations_file, image_dir,
     num_shards: number of output file shards.
   """
   with contextlib2.ExitStack() as tf_record_close_stack, \
-      tf.gfile.GFile(annotations_file, 'r') as fid:
+      tf.io.gfile.GFile(annotations_file, 'r') as fid:
     output_tfrecords = dataset_utils.open_sharded_output_tfrecords(
         tf_record_close_stack, output_path, num_shards)
     groundtruth_data = json.load(fid)
     images = groundtruth_data['images']
     annotations_index = groundtruth_data['annotations']
-    annotations_index = {int(k): v for k, v in annotations_index.iteritems()}
+    annotations_index = {int(k): v for k, v in annotations_index.items()}
     # convert 'unicode' key to 'int' key after we parse the json file
 
     for idx, image in enumerate(images):
       if idx % 100 == 0:
-        tf.logging.info('On image %d of %d', idx, len(images))
+        tf.compat.v1.logging.info('On image %d of %d', idx, len(images))
       annotations = annotations_index[image['id']]
       tf_example = _create_tf_example(image, annotations, image_dir)
       shard_idx = idx % num_shards
@@ -239,7 +239,7 @@ def _create_tf_example(image, annotations, image_dir):
   image_id = image['id']
 
   full_path = os.path.join(image_dir, filename)
-  with tf.gfile.GFile(full_path, 'rb') as fid:
+  with tf.io.gfile.GFile(full_path, 'rb') as fid:
     encoded_jpg = fid.read()
   encoded_jpg_io = io.BytesIO(encoded_jpg)
   image = PIL.Image.open(encoded_jpg_io)

@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-from tensorflow.contrib import quantize as contrib_quantize
+from tensorflow.compat.v1 import quantize as contrib_quantize
 from tensorflow.contrib import slim as contrib_slim
 
 from datasets import dataset_factory
